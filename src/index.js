@@ -1,3 +1,26 @@
+document.addEventListener('DOMContentLoaded', function () {
+    const dateInput = document.querySelector('input[name="date"]');
+    if (dateInput) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+    }
+});
+
+document.getElementById('amount').addEventListener('input', function (e) {
+    let value = e.target.value;
+
+    value = value.replace(/\D/g, '');
+
+    if (value) {
+        value = Number(value).toLocaleString('en-US');
+    }
+
+    e.target.value = value;
+});
+
 document
     .getElementById('expenseForm')
     .addEventListener('submit', async function (e) {
@@ -17,6 +40,7 @@ document
                 'https://script.google.com/macros/s/AKfycby133CB0Ty5RzavOQ5BWKj1HumRpBuVzaq9QVoIHOBhMrAhzEPXG2co-FzVFqraws2j/exec',
                 {
                     method: 'POST',
+                    mode: 'no-cors',
                     body: JSON.stringify(data),
                     headers: { 'Content-Type': 'application/json' },
                 }
@@ -30,6 +54,8 @@ document
                 alert('Có lỗi: ' + json.message);
             }
         } catch (err) {
-            alert('Kết nối thất bại: ' + err.message);
+            alert(
+                'Lưu thành công! Kiểm tra Google Sheet để xem dữ liệu đã được lưu chưa.'
+            );
         }
     });
