@@ -26,6 +26,8 @@ document
     .addEventListener('submit', async function (e) {
         e.preventDefault();
 
+        showOverlay();
+
         const form = e.target;
         const data = {
             date: form.date.value,
@@ -54,8 +56,16 @@ document
                 alert('Có lỗi: ' + json.message);
             }
         } catch (err) {
+            hideOverlay();
             alert(
                 'Lưu thành công! Kiểm tra Google Sheet để xem dữ liệu đã được lưu chưa.'
             );
         }
     });
+
+function showOverlay() {
+    document.getElementById('overlay').classList.remove('hidden');
+}
+function hideOverlay() {
+    document.getElementById('overlay').classList.add('hidden');
+}
