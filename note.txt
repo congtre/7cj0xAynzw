@@ -1,0 +1,220 @@
+/** ====== CONFIG ====== */
+const SHEETS = {
+  expenses: 'expenses',
+  users: 'users',
+  categories: 'categories'
+};
+const TIMEZONE = 'Asia/Ho_Chi_Minh';
+const API_TOKEN = 'change-me'; // đổi theo ý bạn hoặc để rỗng ""
+/** ===================== */
+
+function doGet(e) {
+  try {
+    checkToken(e);
+    const res = (e.parameter.resource || 'expenses').toLowerCase();
+
+    if (res === 'expenses') {
+      const month = e.parameter.month || '';      // YYYY-MM
+      const user  = e.parameter.user  || '';
+      const cate  = e.parameter.category || '';
+      return json(listExpenses({ month, user, category: cate }));
+    }
+
+    if (res === 'users') {
+      return json(listUsers());
+    }
+
+    if (res === 'categories') {
+      return json(listCategories());
+    }
+
+    if (res === 'summary') {
+      const month = e.parameter.month || ''; // YYYY-MM
+      return json(buildSummary({ month }));
+    }
+
+    return badRequest('Unknown resource');
+  } catch (err) {
+    return serverError(err);
+  }
+}
+
+function doPost(e) {
+  try {
+    checkToken(e);
+    const body = parseBody(e);            // <-- MỚI
+    const action = String(body.action || '').toLowerCase();
+
+    if (action === 'createexpense') {
+      const created = addExpense(body);
+      return json({ ok: true, created });
+    }
+    return badRequest('Unknown action');
+  } catch (err) {
+    return serverError(err);
+  }
+}
+
+// Hỗ trợ cả JSON và form (x-www-form-urlencoded / multipart / text/plain)
+function parseBody(e) {
+  const t = e.postData?.type || '';
+  if (t.indexOf('application/json') > -1) {
+    return JSON.parse(e.postData.contents || '{}');
+  }
+  // Với form/multipart/text, Apps Script đưa dữ liệu vào e.parameter / e.parameters
+  const out = {};
+  const params = e.parameter || {};
+  Object.keys(params).forEach(k => {
+    const v = params[k];
+    out[k] = Array.isArray(v) ? v[0] : v;
+  });
+  return out;
+}
+
+
+/** ---------- Core helpers ---------- */
+function checkToken(e) {
+  if (!API_TOKEN) return;
+  const t1 = e.parameter?.token;
+  const t2 = (() => { try { return JSON.parse(e.postData?.contents || '{}').token; } catch(_) { return undefined; }})();
+  if (t1 !== API_TOKEN && t2 !== API_TOKEN) {
+    throw new Error('Unauthorized');
+  }
+}
+
+function json(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function badRequest(msg) { return json({ ok:false, error: msg }); }
+function serverError(err) { return json({ ok:false, error: String(err) }); }
+
+function fmtDate(d) {
+  if (Object.prototype.toString.call(d) === '[object Date]' && !isNaN(d)) {
+    return Utilities.formatDate(d, TIMEZONE, 'yyyy-MM-dd');
+  }
+  // nếu chuỗi: cố gắng parse
+  const dd = new Date(d);
+  return isNaN(dd) ? String(d || '') : Utilities.formatDate(dd, TIMEZONE, 'yyyy-MM-dd');
+}
+
+function parseMonthStr(s) { // "YYYY-MM" -> {y,m}
+  if (!s) return null;
+  const m = /^(\d{4})-(\d{2})$/.exec(s);
+  if (!m) return null;
+  return { y: +m[1], m: +m[2] };
+}
+
+/** ---------- Data access ---------- */
+function listExpenses({ month, user, category }) {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEETS.expenses);
+  const values = sh.getDataRange().getValues(); // header + rows
+  if (values.length <= 1) return [];
+
+  const header = values[0]; // ["id","date","user","category","amount","note"]
+  const idx = Object.fromEntries(header.map((h,i)=>[String(h).toLowerCase(), i]));
+
+  const rows = [];
+  const mObj = parseMonthStr(month);
+
+  for (let i=1; i<values.length; i++){
+    const r = values[i];
+    const dateVal = r[idx.date];
+    const userVal = r[idx.user];
+    const cateVal = r[idx.category];
+
+    // filter month
+    if (mObj) {
+      const d = new Date(dateVal);
+      if (isNaN(d) || (d.getFullYear() !== mObj.y) || (d.getMonth()+1 !== mObj.m)) continue;
+    }
+    if (user && String(userVal).trim() !== user.trim()) continue;
+    if (category && String(cateVal).trim() !== category.trim()) continue;
+
+    rows.push({
+      id: r[idx.id],
+      date: fmtDate(dateVal),
+      user: userVal,
+      category: cateVal,
+      amount: Number(r[idx.amount] || 0),
+      note: r[idx.note] || ''
+    });
+  }
+  return rows;
+}
+
+function addExpense(body) {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEETS.expenses);
+  const lastRow = sh.getLastRow();
+  const nextId = lastRow >= 2 ? (Number(sh.getRange(lastRow,1).getValue()) + 1) : 1;
+
+  const dateStr = body.date ? fmtDate(body.date) : fmtDate(new Date());
+  const row = [
+    nextId,
+    dateStr,
+    body.user || '',
+    body.category || '',
+    Number(body.amount || 0),
+    body.note || ''
+  ];
+  sh.appendRow(row);
+
+  return { id: nextId, ...{ date: dateStr, user: row[2], category: row[3], amount: row[4], note: row[5] } };
+}
+
+function listUsers() {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEETS.users);
+  const values = sh.getDataRange().getValues();
+  if (values.length <= 1) return [];
+  const header = values[0]; // ["id","name","email?"]
+  const idx = Object.fromEntries(header.map((h,i)=>[String(h).toLowerCase(), i]));
+
+  const rows = [];
+  for (let i=1;i<values.length;i++){
+    const r = values[i];
+    rows.push({
+      id: r[idx.id] || '',
+      name: r[idx.name] || '',
+      email: idx.email != null ? (r[idx.email] || '') : ''
+    });
+  }
+  return rows;
+}
+
+function listCategories() {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEETS.categories);
+  const values = sh.getDataRange().getValues();
+  if (values.length <= 1) return [];
+  const header = values[0]; // ["id","name","budget?"]
+  const idx = Object.fromEntries(header.map((h,i)=>[String(h).toLowerCase(), i]));
+
+  const rows = [];
+  for (let i=1;i<values.length;i++){
+    const r = values[i];
+    rows.push({
+      id: r[idx.id] || '',
+      name: r[idx.name] || '',
+      budget: idx.budget != null ? Number(r[idx.budget] || 0) : 0
+    });
+  }
+  return rows;
+}
+
+function buildSummary({ month }) {
+  const items = listExpenses({ month, user:'', category:'' });
+  // tổng theo category
+  const byCategory = {};
+  // tổng theo user
+  const byUser = {};
+  let total = 0;
+
+  items.forEach(it=>{
+    total += it.amount;
+    byCategory[it.category] = (byCategory[it.category] || 0) + it.amount;
+    byUser[it.user] = (byUser[it.user] || 0) + it.amount;
+  });
+
+  return { total, byCategory, byUser, count: items.length };
+}

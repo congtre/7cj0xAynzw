@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quản lý chi tiêu gia đình</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <div class="max-w-6xl mx-auto p-6 space-y-6">
+    <h1 class="text-3xl font-bold text-center">📊 Quản lý chi tiêu gia đình</h1>
+
+    <!-- 1. Form nhập liệu -->
+    <div class="bg-white rounded-2xl shadow p-4">
+      <h2 class="text-xl font-semibold mb-2">➕ Thêm chi tiêu</h2>
+      <div id="formMount"></div>
+    </div>
+
+    <!-- 2. Bảng thống kê -->
+    <div class="bg-white rounded-2xl shadow p-4">
+      <h2 class="text-xl font-semibold mb-2">📋 Danh sách chi tiêu</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse">
+          <thead>
+            <tr class="bg-gray-200 text-sm">
+              <th class="border px-3 py-2 text-center w-24 md:min-w-[8rem]">Ngày</th>
+              <th class="border px-3 py-2 text-center w-24 md:min-w-[12rem]">Người</th>
+              <th class="border px-3 py-2 text-center w-24 md:min-w-[12rem]">Loại</th>
+              <th class="border px-3 py-2 text-center w-24 md:min-w-[12rem]">Số tiền</th>
+              <th class="border px-3 py-2 text-center">Ghi chú</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="text-sm"></tbody>
+          <tfoot>
+            <tr class="bg-gray-50 font-semibold">
+              <td class="border px-3 py-2 text-center w-24 md:min-w-[8rem]">Tổng</td>
+              <td class="border px-3 py-2 w-24 md:min-w-[12rem]"></td>
+              <td class="border px-3 py-2 w-24 md:min-w-[12rem]"></td>
+              <td class="border px-3 py-2 w-24 md:min-w-[12rem] text-right" id="tableTotal">0</td>
+              <td class="border px-3 py-2"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3. Bộ lọc -->
+    <div id="filters" class="bg-white rounded-2xl shadow p-4"></div>
+
+    <!-- 4. Tổng hợp nhanh -->
+    <div id="summary" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+
+    <!-- 5. Biểu đồ -->
+    <div class="bg-white rounded-2xl shadow p-4">
+      <h2 class="text-xl font-semibold mb-2">📊 Biểu đồ theo loại</h2>
+      <div class="w-full max-w-2xl mx-auto">
+        <canvas id="chartCanvas" class="h-64"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/app.js"></script>
+</body>
+
+
+</html>

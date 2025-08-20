@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quản lý chi tiêu gia đình</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <div class="max-w-6xl mx-auto p-6 space-y-6">
+    <h1 class="text-3xl font-bold text-center">📊 Quản lý chi tiêu gia đình</h1>
+
+    <div class="bg-white rounded-2xl shadow p-4">
+      <h2 class="text-xl font-semibold mb-2">➕ Thêm chi tiêu</h2>
+      <div id="formMount">
+        <form id="expenseForm" class="space-y-3"> <div> <label class="block text-sm mb-1">Ngày</label> <input type="date" name="date" value="" class="w-full border rounded px-3 py-2" required> </div> <div> <label class="block text-sm mb-1">Người</label> <select name="user" class="w-full border rounded px-3 py-2" required> <option value="Mẹ">Mẹ</option> <option value="Ba">Ba</option> <option value="Gạo">Gạo</option> </select> </div> <div> <label class="block text-sm mb-1">Loại</label> <select name="category" class="w-full border rounded px-3 py-2" required> <option value="Nhà cửa & tiện ích">Nhà cửa & tiện ích</option> <option value="Ăn uống">Ăn uống</option> <option value="Đi lại & phương tiện">Đi lại & phương tiện</option> <option value="Sức khỏe & làm đẹp">Sức khỏe & làm đẹp</option> <option value="Giải trí & sở thích">Giải trí & sở thích</option> <option value="Giáo dục & học tập">Giáo dục & học tập</option> <option value="Mua sắm cá nhân">Mua sắm cá nhân</option> <option value="Tiết kiệm & đầu tư">Tiết kiệm & đầu tư</option> <option value="Khác">Khác</option> </select> </div> <div> <label class="block text-sm mb-1">Số tiền</label> <input type="number" name="amount" min="0" step="1000" class="w-full border rounded px-3 py-2" required> </div> <div> <label class="block text-sm mb-1">Ghi chú</label> <textarea name="note" rows="2" class="w-full border rounded px-3 py-2"></textarea> </div> <button class="w-full bg-emerald-600 text-white py-2 rounded hover:bg-emerald-700">Lưu</button> </form>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/index.js"></script>
+</body>
+
+
+</html>
